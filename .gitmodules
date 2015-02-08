@@ -1,0 +1,3 @@
+[submodule "FlatBuffers"]
+	path = FlatBuffers
+	url = git@github.com:kusharami/flatbuffers.git
