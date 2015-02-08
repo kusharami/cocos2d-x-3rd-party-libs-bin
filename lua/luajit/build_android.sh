@@ -1,49 +1,74 @@
 #!/bin/sh
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-host_os=`uname -s | tr "[:upper:]" "[:lower:]"`
+. `pwd`/../../android-toolchain.sh
 
-SRCDIR=$DIR/src
-cd "$SRCDIR"
+PREBUILT_DIR=`pwd`/prebuilt/android
 
-NDK=$NDK_ROOT
-NDKABI=8
-NDKVER=$NDK/toolchains/arm-linux-androideabi-4.8
-NDKP=$NDKVER/prebuilt/${host_os}-x86_64/bin/arm-linux-androideabi-
-NDKF="--sysroot $NDK/platforms/android-$NDKABI/arch-arm"
+SRCDIR=`pwd`/src
 
-# Android/ARM, armeabi (ARMv5TE soft-float), Android 2.2+ (Froyo)
-DESTDIR=$DIR/prebuilt/android/armeabi
-rm "$DESTDIR"/*.a
-make clean
-make HOST_CC="gcc -m32" CROSS=$NDKP TARGET_SYS=Linux TARGET_FLAGS="$NDKF"
+if [ ! -z $1 ]
+then
+	for CFILE in $SRCDIR/src/*.c
+	do
+		dos2unix ${CFILE}
+		chmod +rwxXst ${CFILE}
+	done
 
-if [ -f $SRCDIR/src/libluajit.a ]; then
-    mv $SRCDIR/src/libluajit.a $DESTDIR/libluajit.a
-fi;
+	for CFILE in $SRCDIR/src/**/*.c
+	do
+		dos2unix ${CFILE}
+		chmod +rwxXst ${CFILE}
+	done
 
-# Android/ARM, armeabi-v7a (ARMv7 VFP), Android 4.0+ (ICS)
-NDKARCH="-march=armv7-a -mfloat-abi=softfp -Wl,--fix-cortex-a8"
-DESTDIR=$DIR/prebuilt/android/armeabi-v7a
-rm "$DESTDIR"/*.a
-make clean
-make HOST_CC="gcc -m32" CROSS=$NDKP TARGET_SYS=Linux TARGET_FLAGS="$NDKF $NDKARCH"
+	for CFILE in $SRCDIR/src/*.h
+	do
+		dos2unix ${CFILE}
+		chmod +rwxXst ${CFILE}
+	done
 
-if [ -f $SRCDIR/src/libluajit.a ]; then
-    mv $SRCDIR/src/libluajit.a $DESTDIR/libluajit.a
-fi;
+	for CFILE in $SRCDIR/src/**/*.h
+	do
+		dos2unix ${CFILE}
+		chmod +rwxXst ${CFILE}
+	done
+fi
 
-# Android/x86, x86 (i686 SSE3), Android 4.0+ (ICS)
-NDKABI=14
-DESTDIR=$DIR/prebuilt/android/x86
-NDKVER=$NDK/toolchains/x86-4.8
-NDKP=$NDKVER/prebuilt/${host_os}-x86_64/bin/i686-linux-android-
-NDKF="--sysroot $NDK/platforms/android-$NDKABI/arch-x86"
-rm "$DESTDIR"/*.a
-make clean
-make HOST_CC="gcc -m32" CROSS=$NDKP TARGET_SYS=Linux TARGET_FLAGS="$NDKF"
+function build_luajit() {
+	DESTDIR="$PREBUILT_DIR/$2"
 
-if [ -f $SRCDIR/src/libluajit.a ]; then
-    mv $SRCDIR/src/libluajit.a $DESTDIR/libluajit.a
-fi;
+	if [ ! -f $DESTDIR/libluajit.a ]
+	then
+		if [ -d "$DESTDIR" ]
+		then
+			rm -r "$DESTDIR" || exit 1
+		fi
 
-make clean
+		echo "$DESTDIR"
+	
+		mkdir -p "$DESTDIR" || exit 1
+	
+		export CFLAGS=""
+		export CPPFLAGS=""
+		export LDFLAGS="" 
+	
+		make_android_toolchain $5 $1
+	
+		pushd $SRCDIR
+	
+		make clean && make HOST_CC="gcc $4" CC="gcc $4" TARGET_FLAGS="-mandroid $3 -DANDROID -DNDEBUG -UDEBUG" CROSS=$ANDROID_TOOLCHAIN- TARGET_SYS=Linux -j 4 || exit 1
+	
+		if [ -f ./src/libluajit.a ]
+		then
+			mv ./src/libluajit.a "$DESTDIR/libluajit.a"
+		fi
+	
+		popd
+	fi
+}
+
+build_luajit arm-linux-androideabi armeabi "-march=armv5te -mthumb -mfloat-abi=softfp" "" android-9
+build_luajit arm-linux-androideabi armeabi-v7a "-march=armv7-a -mfloat-abi=softfp -mfpu=neon" "" android-9
+build_luajit mipsel-linux-android mips "" "" android-9
+build_luajit x86 x86 "" "" android-9
+#build_luajit aarch64-linux-android arm64-v8a "-march=armv8-a" "" android-21
+#build_luajit mips64el-linux-android mips64 "-mabi=64" "" android-21
+#build_luajit x86_64-linux-android x86_64 "-m64" "" android-21

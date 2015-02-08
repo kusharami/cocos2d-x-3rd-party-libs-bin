@@ -24,7 +24,7 @@ function make_android_toolchain() {
 	popd
 }
 
-function make_all_android-toolchains() {
+function make_all_android_toolchains() {
 	make_android_toolchain android-9 arm-linux-androideabi
 	make_android_toolchain android-9 mipsel-linux-android
 	make_android_toolchain android-9 x86
