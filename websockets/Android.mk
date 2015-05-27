@@ -6,7 +6,6 @@ LOCAL_MODULE := websockets
 
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
 LOCAL_ARM_MODE := arm
-LOCAL_ARM_NEON := true
 endif
 
 LOCAL_CFLAGS    := -DLWS_BUILTIN_GETIFADDRS
