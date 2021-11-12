@@ -11,9 +11,11 @@ LIBS += -L$$[QT_INSTALL_LIBS]
 
 QTFREETYPE_LIB = qtfreetype
 
+equals(QT_MAJOR_VERSION, 5):lessThan(QT_MINOR_VERSION, 15) {
 CONFIG(debug, debug|release) {
     win32:QTFREETYPE_LIB = $$join(QTFREETYPE_LIB, , , d)
     else:QTFREETYPE_LIB = $$join(QTFREETYPE_LIB, , , _debug)
+}
 }
 
 LIBS += -l$$QTFREETYPE_LIB
