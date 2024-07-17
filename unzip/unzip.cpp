@@ -585,8 +585,7 @@ static int unzGoToNextDisk(unzFile file)
         }
         else
         {
-            s->filestream = ZOPENDISK64(s->z_filefunc, s->filestream_with_CD, number_disk_next,
-                ZLIB_FILEFUNC_MODE_READ | ZLIB_FILEFUNC_MODE_EXISTING);
+            s->filestream = NULL;
         }
 
         if (s->filestream == NULL)

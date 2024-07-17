@@ -59,12 +59,6 @@ voidpf ZCALLBACK fopen_mem_func(voidpf opaque, ZIP_UNUSED const char *filename, 
     return mem;
 }
 
-voidpf ZCALLBACK fopendisk_mem_func(ZIP_UNUSED voidpf opaque, ZIP_UNUSED voidpf stream, ZIP_UNUSED uint32_t number_disk, ZIP_UNUSED int mode)
-{
-    /* Not used */
-    return NULL;
-}
-
 uint32_t ZCALLBACK fread_mem_func(ZIP_UNUSED voidpf opaque, voidpf stream, void *buf, uint32_t size)
 {
     ourmemory_t *mem = (ourmemory_t *)stream;
@@ -156,7 +150,6 @@ int ZCALLBACK ferror_mem_func(ZIP_UNUSED voidpf opaque, ZIP_UNUSED voidpf stream
 void fill_memory_filefunc(zlib_filefunc_def *pzlib_filefunc_def, ourmemory_t *ourmem)
 {
     pzlib_filefunc_def->zopen_file = fopen_mem_func;
-    pzlib_filefunc_def->zopendisk_file = fopendisk_mem_func;
     pzlib_filefunc_def->zread_file = fread_mem_func;
     pzlib_filefunc_def->zwrite_file = fwrite_mem_func;
     pzlib_filefunc_def->ztell_file = ftell_mem_func;

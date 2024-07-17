@@ -86,7 +86,6 @@ typedef long     (ZCALLBACK *seek_file_func)     (voidpf opaque, voidpf stream, 
 typedef struct zlib_filefunc_def_s
 {
     open_file_func      zopen_file;
-    opendisk_file_func  zopendisk_file;
     read_file_func      zread_file;
     write_file_func     zwrite_file;
     tell_file_func      ztell_file;
@@ -104,7 +103,6 @@ typedef voidpf   (ZCALLBACK *opendisk64_file_func)(voidpf opaque, voidpf stream,
 typedef struct zlib_filefunc64_def_s
 {
     open64_file_func     zopen64_file;
-    opendisk64_file_func zopendisk64_file;
     read_file_func       zread_file;
     write_file_func      zwrite_file;
     tell64_file_func     ztell64_file;
@@ -135,7 +133,6 @@ typedef struct zlib_filefunc64_32_def_s
 #define ZERROR64(filefunc,filestream)               ((*((filefunc).zfile_func64.zerror_file))       ((filefunc).zfile_func64.opaque,filestream))
 
 voidpf   call_zopen64(const zlib_filefunc64_32_def *pfilefunc,const void*filename, int mode);
-voidpf   call_zopendisk64(const zlib_filefunc64_32_def *pfilefunc, voidpf filestream, uint32_t number_disk, int mode);
 long     call_zseek64(const zlib_filefunc64_32_def *pfilefunc, voidpf filestream, uint64_t offset, int origin);
 uint64_t call_ztell64(const zlib_filefunc64_32_def *pfilefunc, voidpf filestream);
 

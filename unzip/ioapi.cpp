@@ -34,13 +34,6 @@ voidpf call_zopen64(const zlib_filefunc64_32_def *pfilefunc, const void *filenam
     return (*(pfilefunc->zopen32_file))(pfilefunc->zfile_func64.opaque, (const char*)filename, mode);
 }
 
-voidpf call_zopendisk64(const zlib_filefunc64_32_def *pfilefunc, voidpf filestream, uint32_t number_disk, int mode)
-{
-    if (pfilefunc->zfile_func64.zopendisk64_file != NULL)
-        return (*(pfilefunc->zfile_func64.zopendisk64_file)) (pfilefunc->zfile_func64.opaque, filestream, number_disk, mode);
-    return (*(pfilefunc->zopendisk32_file))(pfilefunc->zfile_func64.opaque, filestream, number_disk, mode);
-}
-
 long call_zseek64(const zlib_filefunc64_32_def *pfilefunc, voidpf filestream, uint64_t offset, int origin)
 {
     uint32_t offset_truncated = 0;
@@ -66,9 +59,7 @@ uint64_t call_ztell64(const zlib_filefunc64_32_def *pfilefunc, voidpf filestream
 void fill_zlib_filefunc64_32_def_from_filefunc32(zlib_filefunc64_32_def *p_filefunc64_32, const zlib_filefunc_def *p_filefunc32)
 {
     p_filefunc64_32->zfile_func64.zopen64_file = NULL;
-    p_filefunc64_32->zfile_func64.zopendisk64_file = NULL;
     p_filefunc64_32->zopen32_file = p_filefunc32->zopen_file;
-    p_filefunc64_32->zopendisk32_file = p_filefunc32->zopendisk_file;
     p_filefunc64_32->zfile_func64.zerror_file = p_filefunc32->zerror_file;
     p_filefunc64_32->zfile_func64.zread_file = p_filefunc32->zread_file;
     p_filefunc64_32->zfile_func64.zwrite_file = p_filefunc32->zwrite_file;
@@ -145,56 +136,6 @@ static voidpf ZCALLBACK fopen64_file_func(ZIP_UNUSED voidpf opaque, const void *
         return file_build_ioposix(file, (const char*)filename);
     }
     return file;
-}
-
-static voidpf ZCALLBACK fopendisk64_file_func(voidpf opaque, voidpf stream, uint32_t number_disk, int mode)
-{
-    FILE_IOPOSIX *ioposix = NULL;
-    char *diskFilename = NULL;
-    voidpf ret = NULL;
-    int i = 0;
-
-    if (stream == NULL)
-        return NULL;
-    ioposix = (FILE_IOPOSIX*)stream;
-    diskFilename = (char*)malloc(ioposix->filenameLength * sizeof(char));
-    strncpy(diskFilename, (const char*)ioposix->filename, ioposix->filenameLength);
-    for (i = ioposix->filenameLength - 1; i >= 0; i -= 1)
-    {
-        if (diskFilename[i] != '.')
-            continue;
-        snprintf(&diskFilename[i], ioposix->filenameLength - i, ".z%02u", number_disk + 1);
-        break;
-    }
-    if (i >= 0)
-        ret = fopen64_file_func(opaque, diskFilename, mode);
-    free(diskFilename);
-    return ret;
-}
-
-static voidpf ZCALLBACK fopendisk_file_func(voidpf opaque, voidpf stream, uint32_t number_disk, int mode)
-{
-    FILE_IOPOSIX *ioposix = NULL;
-    char *diskFilename = NULL;
-    voidpf ret = NULL;
-    int i = 0;
-
-    if (stream == NULL)
-        return NULL;
-    ioposix = (FILE_IOPOSIX*)stream;
-    diskFilename = (char*)malloc(ioposix->filenameLength * sizeof(char));
-    strncpy(diskFilename, (const char*)ioposix->filename, ioposix->filenameLength);
-    for (i = ioposix->filenameLength - 1; i >= 0; i -= 1)
-    {
-        if (diskFilename[i] != '.')
-            continue;
-        snprintf(&diskFilename[i], ioposix->filenameLength - i, ".z%02u", number_disk + 1);
-        break;
-    }
-    if (i >= 0)
-        ret = fopen_file_func(opaque, diskFilename, mode);
-    free(diskFilename);
-    return ret;
 }
 
 static uint32_t ZCALLBACK fread_file_func(ZIP_UNUSED voidpf opaque, voidpf stream, void* buf, uint32_t size)
@@ -329,7 +270,6 @@ static int ZCALLBACK ferror_file_func(ZIP_UNUSED voidpf opaque, voidpf stream)
 void fill_fopen_filefunc(zlib_filefunc_def *pzlib_filefunc_def)
 {
     pzlib_filefunc_def->zopen_file = fopen_file_func;
-    pzlib_filefunc_def->zopendisk_file = fopendisk_file_func;
     pzlib_filefunc_def->zread_file = fread_file_func;
     pzlib_filefunc_def->zwrite_file = fwrite_file_func;
     pzlib_filefunc_def->ztell_file = ftell_file_func;
@@ -342,7 +282,6 @@ void fill_fopen_filefunc(zlib_filefunc_def *pzlib_filefunc_def)
 void fill_fopen64_filefunc(zlib_filefunc64_def *pzlib_filefunc_def)
 {
     pzlib_filefunc_def->zopen64_file = fopen64_file_func;
-    pzlib_filefunc_def->zopendisk64_file = fopendisk64_file_func;
     pzlib_filefunc_def->zread_file = fread_file_func;
     pzlib_filefunc_def->zwrite_file = fwrite_file_func;
     pzlib_filefunc_def->ztell64_file = ftell64_file_func;
